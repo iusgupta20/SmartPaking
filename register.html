@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create Account — SmartPark 360</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    try { var s = JSON.parse(localStorage.getItem("sp_settings") || "{}"); document.documentElement.setAttribute("data-theme", s.theme || "light"); } catch (e) {}
+  </script>
+</head>
+<body data-page="register">
+
+  <div id="loader" class="loader" aria-hidden="true">
+    <div class="loader-inner">
+      <div class="loader-logo"><img src="assets/logo.svg" alt="SmartPark 360"><div class="loader-ring"></div></div>
+      <div class="loader-bar"><span></span></div>
+      <p class="loader-text">Loading SmartPark 360…</p>
+    </div>
+  </div>
+
+  <div class="auth-shell">
+    <!-- Left brand panel -->
+    <aside class="auth-brand">
+      <div class="auth-brand-top">
+        <img src="assets/logo.svg" alt="" style="width:44px;height:44px;border-radius:13px">
+        <span><span class="brand-name">SmartPark <em style="color:#a7f3ea">360</em></span><span class="brand-tag" style="color:rgba(255,255,255,.75)">Smart City Mission</span></span>
+      </div>
+      <div>
+        <h2>Join your city's<br>smart parking network.</h2>
+        <p class="lead">Free for citizens. Reserve bays, scan QR codes and never circle the block again.</p>
+        <div class="auth-brand-points">
+          <div class="auth-brand-point">
+            <div class="ai"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+            <p><strong>Instant search</strong> — filter by distance, price and live availability.</p>
+          </div>
+          <div class="auth-brand-point">
+            <div class="ai"><i class="fa-solid fa-ticket"></i></div>
+            <p><strong>Smart bookings</strong> — upcoming, active and past trips in one place.</p>
+          </div>
+          <div class="auth-brand-point">
+            <div class="ai"><i class="fa-solid fa-bell"></i></div>
+            <p><strong>Alerts</strong> — notifications for confirmations, cancellations and releases.</p>
+          </div>
+        </div>
+        <div class="auth-brand-stats">
+          <div><div class="b">12.4K</div><div class="l">Active Users</div></div>
+          <div><div class="b">4.5★</div><div class="l">Avg. Rating</div></div>
+          <div><div class="b">98.6%</div><div class="l">Uptime</div></div>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:rgba(255,255,255,.7);position:relative;z-index:1">© 2026 SmartPark 360 · SIH 2026 Prototype</div>
+    </aside>
+
+    <!-- Right form panel -->
+    <main class="auth-side">
+      <div class="auth-card">
+        <h3>Create your account</h3>
+        <p class="sub">Takes less than a minute. No documents needed for the demo.</p>
+
+        <form id="registerForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label" for="name">Full name</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-user"></i>
+              <input class="form-control" type="text" id="name" name="name" placeholder="e.g. Rohan Sharma" autocomplete="name">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="email">Email address</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-envelope"></i>
+              <input class="form-control" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="phone">Mobile number</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-phone"></i>
+              <input class="form-control" type="tel" id="phone" name="phone" placeholder="10-digit mobile number" autocomplete="tel" maxlength="10">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input class="form-control" type="password" id="password" name="password" placeholder="At least 6 characters" autocomplete="new-password">
+              <button type="button" class="pass-toggle" tabindex="-1"><i class="fa-regular fa-eye"></i></button>
+            </div>
+            <div class="mt-2" id="pwMeter" style="display:none">
+              <div style="height:5px;border-radius:99px;background:var(--surface-3);overflow:hidden"><div id="pwMeterBar" style="height:100%;width:0;border-radius:99px;transition:width .3s ease"></div></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="confirm">Confirm password</label>
+            <div class="input-icon-wrap">
+              <i class="fa-solid fa-lock"></i>
+              <input class="form-control" type="password" id="confirm" name="confirm" placeholder="Repeat password" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="terms" name="terms">
+            <label class="form-check-label small" for="terms">I agree to the <a href="#" class="text-accent">Terms of Service</a> and <a href="#" class="text-accent">Privacy Policy</a>.</label>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 btn-lg"><i class="fa-solid fa-user-plus me-2"></i>Create Account</button>
+        </form>
+
+        <div class="divider-line">Already have an account?</div>
+        <a class="btn btn-ghost w-100" href="login.html"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign in instead</a>
+        <p class="text-center mt-4 mb-0"><a class="small" href="index.html"><i class="fa-solid fa-arrow-left me-1"></i>Back to home</a></p>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="data/parking-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

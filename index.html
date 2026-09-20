@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SmartPark 360 — Realtime Street Parking Management | SIH1515</title>
+  <meta name="description" content="SmartPark 360 — a Smart India Hackathon prototype for realtime smart street parking management: live availability, QR entry, bookings and a city command center.">
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Theme-aware SVG illustration colours */
+    .scene-road { fill: color-mix(in srgb, var(--ink) 10%, transparent); }
+    .scene-lane { stroke: var(--ink-soft); opacity: .35; }
+    .scene-bld { fill: color-mix(in srgb, var(--ink) 14%, transparent); }
+    .scene-bld2 { fill: color-mix(in srgb, var(--ink) 9%, transparent); }
+    .scene-win { fill: var(--accent); opacity: .55; }
+    .scene-car { fill: var(--accent-deep); }
+    .scene-car2 { fill: var(--blue); }
+    .scene-wheel { fill: var(--ink); opacity: .85; }
+    .scene-sign { fill: url(#spg); }
+    #landingMap { height: 440px; border-radius: var(--radius-lg); z-index: 0; }
+  </style>
+  <script>
+    try { var s = JSON.parse(localStorage.getItem("sp_settings") || "{}"); document.documentElement.setAttribute("data-theme", s.theme || "light"); } catch (e) {}
+  </script>
+</head>
+<body data-page="index">
+
+  <!-- Loading screen -->
+  <div id="loader" class="loader" aria-hidden="true">
+    <div class="loader-inner">
+      <div class="loader-logo"><img src="assets/logo.svg" alt="SmartPark 360"><div class="loader-ring"></div></div>
+      <div class="loader-bar"><span></span></div>
+      <p class="loader-text">Loading SmartPark 360…</p>
+    </div>
+  </div>
+
+  <div id="navbar"></div>
+
+  <main id="page">
+
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-copy" data-aos="fade-up">
+            <span class="hero-badge"><span class="flag">🇮🇳</span> Smart India Hackathon 2026 <span class="sep"></span> SIH1515</span>
+            <h1 class="hero-title">Parking that thinks <span class="grad">in real time.</span></h1>
+            <p class="hero-sub">SmartPark 360 connects drivers with live street-parking availability, QR-based entry and a unified command center for city administrators — built to make every city block smarter.</p>
+            <div class="hero-cta">
+              <a class="btn btn-primary btn-lg" href="dashboard.html"><i class="fa-solid fa-magnifying-glass-location me-2"></i>Find Parking Now</a>
+              <a class="btn btn-outline-accent btn-lg" href="map.html"><i class="fa-solid fa-map-location-dot me-2"></i>Explore Live Map</a>
+            </div>
+            <div class="hero-trust">
+              <span><i class="fa-solid fa-circle-check"></i>No app download</span>
+              <span><i class="fa-solid fa-circle-check"></i>Live slot data every 5s</span>
+              <span><i class="fa-solid fa-circle-check"></i>QR entry &amp; exit</span>
+            </div>
+          </div>
+
+          <!-- Smart city illustration -->
+          <div class="hero-art" data-aos="zoom-in" data-aos-delay="150">
+            <div class="hero-chip hero-chip-1"><span class="dot" style="background:var(--green)"></span> 12 bays available near you</div>
+            <div class="hero-chip hero-chip-2"><span class="dot" style="background:var(--accent)"></span> Sensor network online</div>
+
+            <svg viewBox="0 0 560 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Smart city illustration">
+              <defs>
+                <linearGradient id="spg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#12b5a4"/><stop offset="1" stop-color="#0b8577"/>
+                </linearGradient>
+                <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#e7f6f2" stop-opacity=".9"/><stop offset="1" stop-color="#f5f7fa" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- sky -->
+              <rect width="560" height="520" rx="28" fill="url(#skyG)"/>
+              <circle cx="462" cy="84" r="56" fill="var(--accent)" opacity=".10"/>
+
+              <!-- clouds -->
+              <g class="svg-float" opacity=".6">
+                <ellipse cx="120" cy="86" rx="52" ry="16" fill="var(--ink-soft)" opacity=".18"/>
+                <ellipse cx="156" cy="76" rx="36" ry="12" fill="var(--ink-soft)" opacity=".14"/>
+                <ellipse cx="420" cy="150" rx="46" ry="13" fill="var(--ink-soft)" opacity=".16"/>
+              </g>
+
+              <!-- skyline left -->
+              <g>
+                <rect class="scene-bld" x="40" y="150" width="56" height="300" rx="6"/>
+                <rect class="scene-bld2" x="104" y="120" width="44" height="330" rx="6"/>
+                <rect class="scene-bld" x="156" y="176" width="52" height="274" rx="6"/>
+                <rect class="scene-bld2" x="216" y="140" width="40" height="310" rx="6"/>
+                <rect class="scene-bld" x="264" y="190" width="46" height="260" rx="6"/>
+                <g class="svg-blink">
+                  <rect class="scene-win" x="52" y="170" width="8" height="8" rx="2"/><rect class="scene-win" x="70" y="170" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="52" y="200" width="8" height="8" rx="2"/><rect class="scene-win" x="88" y="200" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="70" y="230" width="8" height="8" rx="2"/><rect class="scene-win" x="88" y="230" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="116" y="150" width="7" height="7" rx="2"/><rect class="scene-win" x="130" y="150" width="7" height="7" rx="2"/>
+                  <rect class="scene-win" x="116" y="180" width="7" height="7" rx="2"/><rect class="scene-win" x="143" y="180" width="7" height="7" rx="2"/>
+                  <rect class="scene-win" x="130" y="210" width="7" height="7" rx="2"/><rect class="scene-win" x="116" y="240" width="7" height="7" rx="2"/>
+                </g>
+              </g>
+
+              <!-- skyline right -->
+              <g>
+                <rect class="scene-bld" x="330" y="168" width="46" height="282" rx="6"/>
+                <rect class="scene-bld2" x="384" y="128" width="58" height="322" rx="6"/>
+                <rect class="scene-bld" x="450" y="196" width="48" height="254" rx="6"/>
+                <g class="svg-blink" style="animation-delay:1.2s">
+                  <rect class="scene-win" x="342" y="188" width="8" height="8" rx="2"/><rect class="scene-win" x="360" y="188" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="342" y="218" width="8" height="8" rx="2"/><rect class="scene-win" x="360" y="218" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="398" y="150" width="8" height="8" rx="2"/><rect class="scene-win" x="416" y="150" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="398" y="180" width="8" height="8" rx="2"/><rect class="scene-win" x="434" y="180" width="8" height="8" rx="2"/>
+                  <rect class="scene-win" x="416" y="210" width="8" height="8" rx="2"/><rect class="scene-win" x="398" y="240" width="8" height="8" rx="2"/>
+                </g>
+              </g>
+
+              <!-- parking sign + radar -->
+              <g transform="translate(462 250)" class="svg-float">
+                <circle class="svg-radar" cx="0" cy="0" r="46" stroke="var(--accent)" stroke-width="2" fill="none"/>
+                <circle class="svg-radar" style="animation-delay:1s" cx="0" cy="0" r="46" stroke="var(--accent)" stroke-width="2" fill="none"/>
+                <rect x="-27" y="-27" width="54" height="54" rx="15" fill="url(#spg)" filter="drop-shadow(0 12px 20px rgba(11,133,119,.35))"/>
+                <path d="M-9 15V-13h7.5a6.5 6.5 0 1 1 0 13H-4" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+
+              <!-- sensor pole left -->
+              <g>
+                <rect x="18" y="408" width="5" height="42" rx="2.5" fill="var(--ink-soft)" opacity=".5"/>
+                <circle class="svg-pulse-dot" cx="20.5" cy="404" r="6" fill="var(--accent)"/>
+              </g>
+              <!-- sensor pole right -->
+              <g>
+                <rect x="528" y="388" width="5" height="62" rx="2.5" fill="var(--ink-soft)" opacity=".5"/>
+                <circle class="svg-pulse-dot" style="animation-delay:.8s" cx="530.5" cy="384" r="6" fill="var(--blue)"/>
+              </g>
+
+              <!-- road -->
+              <rect class="scene-road" x="0" y="452" width="560" height="68" rx="0"/>
+              <line class="scene-lane" x1="0" y1="486" x2="560" y2="486" stroke-width="4" stroke-dasharray="22 18"/>
+
+              <!-- parked car with availability dot -->
+              <g transform="translate(96 466)">
+                <circle class="svg-pulse-dot" cx="30" cy="-20" r="6" fill="var(--green)"/>
+                <rect class="scene-car" x="0" y="8" width="58" height="18" rx="8"/>
+                <rect class="scene-car" x="10" y="0" width="30" height="12" rx="6"/>
+                <circle class="scene-wheel" cx="14" cy="26" r="6"/><circle class="scene-wheel" cx="44" cy="26" r="6"/>
+                <rect x="6" y="4" width="9" height="5" rx="2.5" fill="#fff" opacity=".75"/>
+                <rect x="26" y="4" width="9" height="5" rx="2.5" fill="#fff" opacity=".75"/>
+              </g>
+
+              <!-- driving car -->
+              <g class="svg-car" transform="translate(-40 478)">
+                <rect class="scene-car2" x="0" y="6" width="64" height="18" rx="9"/>
+                <rect class="scene-car2" x="12" y="-2" width="34" height="12" rx="6"/>
+                <circle class="scene-wheel" cx="16" cy="25" r="6.5"/><circle class="scene-wheel" cx="48" cy="25" r="6.5"/>
+                <rect x="7" y="1" width="10" height="5.5" rx="2.75" fill="#fff" opacity=".8"/>
+                <rect x="29" y="1" width="10" height="5.5" rx="2.75" fill="#fff" opacity=".8"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Stats band -->
+        <div class="stat-band" data-aos="fade-up">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-square-parking"></i></div>
+            <div class="stat-num" data-count="20" data-suffix="+" data-live="1" data-key="zones">0</div>
+            <div class="stat-label">Smart Parking Zones</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+            <div class="stat-num" data-count="520" data-suffix="+" data-live="1" data-key="bays">0</div>
+            <div class="stat-label">IoT-Connected Bays</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+            <div class="stat-num" data-count="98.6" data-decimals="1" data-suffix="%">0</div>
+            <div class="stat-label">Platform Uptime</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-num" data-count="12.4" data-decimals="1" data-suffix="K">0</div>
+            <div class="stat-label">Daily App Users</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURES ================= -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head-center" data-aos="fade-up">
+          <span class="section-tag"><i class="fa-solid fa-layer-group"></i> Key Features</span>
+          <h2 class="section-title">Everything a smart city needs, <br class="d-none d-md-block">in one platform</h2>
+          <p class="section-sub">From the driver's first search to the city command center's final report — every layer of street parking management is covered.</p>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="0">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-satellite-dish"></i></div>
+              <h4 class="feature-title">Real-time Slot Detection</h4>
+              <p class="feature-desc">IoT-style simulation refreshes bay occupancy every 5 seconds, so availability is never guesswork.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="80">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-qrcode"></i></div>
+              <h4 class="feature-title">QR Entry &amp; Exit</h4>
+              <p class="feature-desc">Every booking generates a unique scannable QR code for fast, contactless gate access.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="160">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-calendar-check"></i></div>
+              <h4 class="feature-title">Smart Reservations</h4>
+              <p class="feature-desc">Reserve any available bay ahead of time by vehicle type, duration and preferred time slot.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="240">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-chart-pie"></i></div>
+              <h4 class="feature-title">City Command Center</h4>
+              <p class="feature-desc">Administrators monitor occupancy, revenue and peak load live on a professional dashboard.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="320">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-map-location-dot"></i></div>
+              <h4 class="feature-title">Navigation &amp; Maps</h4>
+              <p class="feature-desc">Interactive OpenStreetMap views guide drivers to the nearest open bay with one tap.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+            <div class="feature-card">
+              <div class="feature-ico"><i class="fa-solid fa-shield-halved"></i></div>
+              <h4 class="feature-title">Secure &amp; Scalable</h4>
+              <p class="feature-desc">Role-based access for citizens and administrators, with a modular codebase ready to scale.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HOW IT WORKS ================= -->
+    <section class="section" id="how" style="background: var(--bg-soft);">
+      <div class="container">
+        <div class="section-head-center" data-aos="fade-up">
+          <span class="section-tag"><i class="fa-solid fa-route"></i> How it works</span>
+          <h2 class="section-title">From search to checkout in four steps</h2>
+          <p class="section-sub">A complete journey designed for a modern Indian city — minimal friction, maximum clarity.</p>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="0">
+            <div class="step-card feature-card">
+              <div class="step-num">1</div>
+              <i class="fa-solid fa-magnifying-glass-location mb-2" style="font-size:24px;color:var(--accent-deep)"></i>
+              <h5 class="fw-bold">Find a Spot</h5>
+              <p class="feature-desc mb-0">Search 20+ smart zones and filter by distance, price and live availability.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="step-card feature-card">
+              <div class="step-num">2</div>
+              <i class="fa-solid fa-hand-pointer mb-2" style="font-size:24px;color:var(--accent-deep)"></i>
+              <h5 class="fw-bold">Reserve</h5>
+              <p class="feature-desc mb-0">Pick an available bay and confirm your booking in seconds.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="step-card feature-card">
+              <div class="step-num">3</div>
+              <i class="fa-solid fa-qrcode mb-2" style="font-size:24px;color:var(--accent-deep)"></i>
+              <h5 class="fw-bold">Scan &amp; Enter</h5>
+              <p class="feature-desc mb-0">Show your booking QR at the gate for instant contactless entry.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+            <div class="step-card feature-card">
+              <div class="step-num">4</div>
+              <i class="fa-solid fa-circle-check mb-2" style="font-size:24px;color:var(--accent-deep)"></i>
+              <h5 class="fw-bold">Pay &amp; Go</h5>
+              <p class="feature-desc mb-0">Checkout automatically when your time ends — the bay frees up in real time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LIVE MAP TEASER ================= -->
+    <section class="section" id="map">
+      <div class="container">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-5" data-aos="fade-up">
+            <span class="section-tag"><i class="fa-solid fa-map-location-dot"></i> Live Map</span>
+            <h2 class="section-title">Every zone, one live map</h2>
+            <p class="section-sub">All 20 parking zones across Indian cities are plotted in real time. Green pins mean bays are free; red means full. Your location is detected automatically.</p>
+            <ul class="list-unstyled mt-4">
+              <li class="about-point"><i class="fa-solid fa-location-crosshairs"></i><p><strong>Live user location</strong> — distances update as you move.</p></li>
+              <li class="about-point"><i class="fa-solid fa-circle-info"></i><p><strong>Smart popups</strong> — availability, pricing and directions in one click.</p></li>
+              <li class="about-point"><i class="fa-solid fa-rotate"></i><p><strong>Self-refreshing</strong> — markers sync with the 5-second simulation.</p></li>
+            </ul>
+            <a class="btn btn-primary btn-lg mt-2" href="map.html"><i class="fa-solid fa-arrow-up-right-from-square me-2"></i>Open Full Map</a>
+          </div>
+          <div class="col-lg-7" data-aos="fade-left" data-aos-delay="120">
+            <div id="landingMap" class="shadow"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ABOUT ================= -->
+    <section class="section" id="about" style="background: var(--bg-soft);">
+      <div class="container">
+        <div class="row align-items-center g-5">
+          <div class="col-lg-6" data-aos="fade-up">
+            <span class="section-tag"><i class="fa-solid fa-circle-info"></i> About the Project</span>
+            <h2 class="section-title">Built to solve a real civic problem</h2>
+            <p class="section-sub">Street parking in Indian cities is unmanaged: drivers circle for minutes, meters go unused and administrators have zero visibility. SmartPark 360 attacks all three problems with a single, demonstrable platform.</p>
+            <div class="mt-4">
+              <div class="about-point"><i class="fa-solid fa-car"></i><p><strong>For drivers:</strong> find, reserve and pay for a bay before you even leave home.</p></div>
+              <div class="about-point"><i class="fa-solid fa-city"></i><p><strong>For cities:</strong> live occupancy, revenue and peak-load analytics to plan better.</p></div>
+              <div class="about-point"><i class="fa-solid fa-leaf"></i><p><strong>For the environment:</strong> fewer circling cars means less fuel burn and cleaner air.</p></div>
+            </div>
+          </div>
+          <div class="col-lg-6" data-aos="fade-up" data-aos-delay="120">
+            <div class="sih-card mb-4">
+              <div class="tag">Problem Statement</div>
+              <h4>SIH1515 — Smart and Effective Realtime Management of Street Parking</h4>
+              <p>Design a system that monitors street parking in real time, guides citizens to available bays and gives municipal administrators a single command center for operations.</p>
+            </div>
+            <div class="sih-card">
+              <div class="tag">Stack</div>
+              <h4>100% client-side prototype</h4>
+              <p>HTML5, CSS3, Bootstrap 5 and vanilla JavaScript (ES6) — with LocalStorage as the database and mock JSON as the seed data. No servers, no frameworks, fully explainable.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TESTIMONIALS ================= -->
+    <section class="section" id="testimonials">
+      <div class="container">
+        <div class="section-head-center" data-aos="fade-up">
+          <span class="section-tag"><i class="fa-solid fa-comments"></i> What people say</span>
+          <h2 class="section-title">Trusted by commuters and city teams</h2>
+        </div>
+        <div class="row g-4">
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+            <div class="testimonial-card">
+              <div class="t-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+              <p class="t-quote">"The live occupancy data cut commuter search time by nearly 40%. It genuinely feels like a real municipal deployment."</p>
+              <div class="t-author">
+                <div class="t-avatar" style="background:#0e9f8e">PM</div>
+                <div><div class="t-name">Priya Menon</div><div class="t-role">Smart City Officer, Bengaluru</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="testimonial-card">
+              <div class="t-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
+              <p class="t-quote">"I book a bay near Hitech City every morning. The QR entry is so smooth I barely slow down at the gate."</p>
+              <div class="t-author">
+                <div class="t-avatar" style="background:#2f6fed">AR</div>
+                <div><div class="t-name">Arjun Rao</div><div class="t-role">Software Engineer, Hyderabad</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="testimonial-card">
+              <div class="t-stars"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+              <p class="t-quote">"As an operator I finally see revenue and peak loads in one dashboard. The reports alone are worth the pilot."</p>
+              <div class="t-author">
+                <div class="t-avatar" style="background:#d97c0b">VS</div>
+                <div><div class="t-name">Vikram Singh</div><div class="t-role">Parking Zone Operator, New Delhi</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA ================= -->
+    <section class="section pb-0" id="cta">
+      <div class="container">
+        <div class="cta-banner" data-aos="zoom-in">
+          <h2>Ready to make your city smarter?</h2>
+          <p>Create a free account and find your first parking spot in under a minute — or explore the admin console as a city administrator.</p>
+          <a class="btn btn-white btn-lg me-2 mb-2" href="register.html"><i class="fa-solid fa-user-plus me-2"></i>Get Started Free</a>
+          <a class="btn btn-white-ghost btn-lg mb-2" href="login.html"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="footer"></footer>
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="data/parking-data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    /* Landing page extras: animated counters + live map teaser */
+    (function () {
+      window.PageScripts = window.PageScripts || {};
+
+      /* ---------- Animated counters (trigger when scrolled into view) ---------- */
+      function initCounters() {
+        const els = document.querySelectorAll(".stat-num[data-count]");
+        if (!("IntersectionObserver" in window)) {
+          els.forEach((el) => (el.textContent = el.dataset.count + (el.dataset.suffix || "")));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((en) => {
+              if (!en.isIntersecting) return;
+              const el = en.target;
+              /* live counters read real counts from the LocalStorage database */
+              if (el.dataset.live === "1") {
+                el.dataset.count = el.dataset.key === "zones" ? DB.getLots().length : DB.getSlots().length;
+              }
+              Utils.countUp(el, parseFloat(el.dataset.count), {
+                suffix: el.dataset.suffix || "",
+                decimals: parseInt(el.dataset.decimals || "0", 10),
+              });
+              io.unobserve(el);
+            });
+          },
+          { threshold: 0.4 }
+        );
+        els.forEach((el) => io.observe(el));
+      }
+
+      /* ---------- Mini live map on the landing page ---------- */
+      function initMap() {
+        const el = document.getElementById("landingMap");
+        if (!el || !window.L) return;
+
+        const map = L.map(el, { scrollWheelZoom: false }).setView([21.16, 78.0], 5);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(map);
+
+        const lots = DB.getLots();
+        const markers = [];
+        lots.forEach((lot) => {
+          const stats = DB.getLotStats(lot.id);
+          const full = stats.available === 0;
+          const icon = L.divIcon({
+            className: "",
+            html: `<div class="marker-pin ${full ? "full" : ""}"><div class="pulse"></div><div class="pin"><i class="fa-solid fa-car"></i></div></div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 34],
+            popupAnchor: [0, -34],
+          });
+          const m = L.marker([lot.lat, lot.lng], { icon }).addTo(map);
+          m.bindPopup(
+            `<div class="map-pop">
+              <h6>${Utils.esc(lot.name)}</h6>
+              <div class="mp-row"><i class="fa-solid fa-location-dot"></i> ${Utils.esc(lot.city)}</div>
+              <div class="mp-avail ${full ? "full" : ""}">${stats.available} / ${stats.total} bays available</div>
+              <a class="btn btn-soft btn-sm" href="parking-details.html?id=${lot.id}">View Details</a>
+            </div>`,
+            { closeButton: false }
+          );
+          markers.push(m);
+        });
+      }
+
+      window.PageScripts["index"] = {
+        init() {
+          initCounters();
+          initMap();
+        },
+      };
+    })();
+  </script>
+</body>
+</html>

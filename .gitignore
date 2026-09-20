@@ -1,0 +1,18 @@
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+
+# Local development and editor files
+.vscode/
+node_modules/
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
